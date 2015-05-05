@@ -13,16 +13,10 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# Check our Cargo configuration options if we have Cargo.toxml.
-if [ -f "$1/Cargo.toml" ]; then
-  if [ -z "$CARGO_URL" ]; then
-    echo "failed: RustConfig must set CARGO_URL to point to a Cargo binary tarball."
-    exit 1
-  fi
-  if [ -z "$CARGO_VERSION" ]; then
-    echo "failed: RustConfig must set CARGO_VERSION to indicate the Cargo version."
-    exit 1
-  fi
+# Check our Cargo configuration options if we have Cargo.toml.
+if [ ! -f "$1/Cargo.toml" ]; then
+  echo "failed: Cargo.toml must exist in project"
+  exit 1
 fi
 
 # Switch to our cache directory.
@@ -31,19 +25,6 @@ cd "$2"
 
 # Work around https://github.com/rust-lang/cargo/issues/598 on Ubuntu 10.04.
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-
-# Make sure we have the C++ runtime libraries required by the Rust nightly
-# builds.
-if [ -f lib/libstdc++.so.6.0.18 ]; then
-  echo "-----> Using libstdc++.so.6.0.18"
-else
-  echo "-----> Downloading rust-support"
-  rm -rf lib
-  curl -O https://s3.amazonaws.com/rust-builds/rust-support.tar.gz
-  tar xzvf rust-support.tar.gz
-fi
-LD_LIBRARY_PATH="$2/lib:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH
 
 # Make sure we have the correct Rust binaries and set up PATH.
 if [ -d rust-cache-$VERSION ]; then
@@ -61,37 +42,18 @@ else
   tar xzf rust.tar.gz -C rust-cache-$VERSION
   rm -r rust.tar.gz
 fi
-rust_path=`ls -1d "$2/rust-cache-$VERSION/"*"/"`
-if [ ! -x "$rust_path/bin/rustc" ]; then
-    echo "failed: Cannot find rust binaries at $rust_path/bin"
+rust_path=`ls -1d "$2/rust-cache-$VERSION/"*""`
+if [ ! -x "$rust_path/rustc/bin/rustc" ]; then
+    echo "failed: Cannot find rust binaries at $rust_path/rustc/bin"
     exit 1
 fi
-PATH="$rust_path/bin:$PATH"
-LD_LIBRARY_PATH="$rust_path/lib:$LD_LIBRARY_PATH"
+PATH="$rust_path/rustc/bin:$PATH"
+PATH="$rust_path/cargo/bin:$PATH"
+export LD_LIBRARY_PATH="$rust_path/rustc/lib:$rust_path/cargo/lib"
+
 echo $LD_LIBRARY_PATH
 
 if [ -f "$1/Cargo.toml" ]; then
-  if [ -d cargo-cache-$CARGO_VERSION ]; then
-    echo "-----> Using Cargo version $CARGO_VERSION"
-  else
-    echo "-----> Downloading Cargo version $CARGO_VERSION binaries from $CARGO_URL"
-
-    rm -f cargo.tar.gz
-    rm -rf cargo-cache-*
-    curl -o cargo.tar.gz "$CARGO_URL"
-
-    echo "-----> Extracting Cargo binaries"
-
-    mkdir cargo-cache-$CARGO_VERSION
-    tar xzf cargo.tar.gz -C cargo-cache-$CARGO_VERSION
-    rm -r cargo.tar.gz
-  fi
-  cargo_path=`ls -1d "$2/cargo-cache-$CARGO_VERSION/"*"/bin"`
-  if [ ! -x "$cargo_path/cargo" ]; then
-      echo "failed: Cannot find cargo binaries at $cargo_path"
-      exit 1
-  fi
-  PATH="$cargo_path:$PATH"
 
   # Make sure we have a fake home directory for the Cargo cache.  Ideally
   # we would keep these in our cache, but our ".git" directories don't
