@@ -1,23 +1,13 @@
 #!/bin/sh
 
-# Load our configuration variables.
-. "$1/RustConfig"
-
-# Check our configuration options.
-if [ -z "$URL" ]; then
-  echo "failed: RustConfig must set URL to point to a Rust binary tarball."
-  exit 1
-fi
-if [ -z "$VERSION" ]; then
-  echo "failed: RustConfig must set VERSION to indicate the Rust version."
-  exit 1
-fi
-
 # Check our Cargo configuration options if we have Cargo.toml.
 if [ ! -f "$1/Cargo.toml" ]; then
   echo "failed: Cargo.toml must exist in project"
   exit 1
 fi
+
+VERSION="nightly"
+URL="http://static.rust-lang.org/dist/rust-nightly-x86_64-unknown-linux-gnu.tar.gz"
 
 # Switch to our cache directory.
 mkdir -p "$2"
@@ -27,7 +17,7 @@ cd "$2"
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Make sure we have the correct Rust binaries and set up PATH.
-if [ -d rust-cache-$VERSION ]; then
+if [ -d rust-cache-nightly ]; then
   echo "-----> Using Rust version $VERSION"
 else
   echo "-----> Downloading Rust version $VERSION binaries from $URL"
@@ -62,6 +52,9 @@ if [ -f "$1/Cargo.toml" ]; then
 
   # Build the actual application using Cargo.
   echo "-----> Building application using Cargo"
+  
+  HOME="$cargo_home" rustc --version
+  HOME="$cargo_home" cargo --version
 
   cd "$1"
   # To debug git issues:
