@@ -6,7 +6,8 @@ if [ ! -f "$1/Cargo.toml" ]; then
   exit 1
 fi
 
-VERSION="nightly"
+DATE=`date +"%Y-%m-%d"`
+VERSION="$DATE"
 URL="http://static.rust-lang.org/dist/rust-nightly-x86_64-unknown-linux-gnu.tar.gz"
 
 # Switch to our cache directory.
@@ -17,7 +18,7 @@ cd "$2"
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Make sure we have the correct Rust binaries and set up PATH.
-if [ -d rust-cache-nightly ]; then
+if [ -d rust-cache-$VERSION ]; then
   echo "-----> Using Rust version $VERSION"
 else
   echo "-----> Downloading Rust version $VERSION binaries from $URL"
