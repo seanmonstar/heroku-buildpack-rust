@@ -17,38 +17,7 @@ cd "$2"
 # Work around https://github.com/rust-lang/cargo/issues/598 on Ubuntu 10.04.
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
-# Make sure we have the correct Rust binaries and set up PATH.
-if [ -d rust-cache-$VERSION ]; then
-  echo "-----> Using Rust version $VERSION"
-else
-  echo "-----> Downloading Rust version $VERSION binaries from $URL"
-
-  rm -f rust.tar.gz
-  rm -rf rust-cache-*
-  curl -o rust.tar.gz "$URL"
-
-  echo "-----> Extracting Rust binaries"
-
-  mkdir rust-cache-$VERSION
-  tar xzf rust.tar.gz -C rust-cache-$VERSION
-  rm -r rust.tar.gz
-fi
-rust_path=`ls -1d "$2/rust-cache-$VERSION/"*""`
-if [ ! -x "$rust_path/rustc/bin/rustc" ]; then
-    echo "failed: Cannot find rust binaries at $rust_path/rustc/bin"
-    exit 1
-fi
-PATH="$rust_path/rustc/bin:$PATH"
-PATH="$rust_path/cargo/bin:$PATH"
-LD_LIBRARY_PATH="$rust_path/rustc/lib"
-DYLD_LIBRARY_PATH="$rust_path/rustc/lib"
-
-echo "-----> LD_LIBRARY_PATH"
-echo $LD_LIBRARY_PATH
-ls $LD_LIBRARY_PATH
-
-export LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH
+curl -sSf https://static.rust-lang.org/rustup.sh | sh -s -- --channel=nightly
 
 if [ -f "$1/Cargo.toml" ]; then
 
