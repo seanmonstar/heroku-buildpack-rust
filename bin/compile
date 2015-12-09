@@ -41,6 +41,7 @@ fi
 PATH="$rust_path/rustc/bin:$PATH"
 PATH="$rust_path/cargo/bin:$PATH"
 export LD_LIBRARY_PATH="$rust_path/rustc/lib:$rust_path/cargo/lib"
+export DYLD_LIBRARY_PATH="$rust_path/rustc/lib:$rust_path/cargo/lib"
 
 echo $LD_LIBRARY_PATH
 
